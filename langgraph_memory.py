@@ -62,7 +62,7 @@ def filter_messages(messages: list) -> list:
     return messages[-2:]
 
 def chatbot(state: State) -> State:
-    messages = filter_messages(state["messages"])
+    messages = filter_messages(state["messages"]) # 최근 2개의 메시지만 가져옴
     result = llm_with_tools.invoke(messages)
     return {"messages": [result]}
 
@@ -76,3 +76,25 @@ graph_builder.add_conditional_edges("chatbot",tools_condition)
 
 graph_builder.set_entry_point("chatbot")
 graph = graph_builder.compile(checkpointer=memory_saver)
+
+
+from langchain_core.messages import HumanMessage
+
+
+config = {"configurable" : {"thread_id" : "20"}} # 이 쓰레드 아이디 안에서는 대화 맥락 기억함
+input_message = HumanMessage(content = "hi! I'm bob dan i like soccer")
+for event in graph.stream({"messages" : [input_message]}, config, stream_mode="values"):
+    event["messages"][-1].pretty_print()
+
+input_message = HumanMessage(content="what's my name?")
+for event in graph.stream({"messages" : [input_message]}, config, stream_mode="values"):
+    event["messages"][-1].pretty_print()
+
+input_message = HumanMessage(content="what's my name?")
+for event in graph.stream({"messages" : [input_message]}, config, stream_mode="values"):
+    event["messages"][-1].pretty_print()
+
+# 메시지를 2개까지만 기억하게 해뒀기때문에 여기서부터 모름
+input_message = HumanMessage(content="what's my favorite?")
+for event in graph.stream({"messages" : [input_message]}, config, stream_mode="values"):
+    event["messages"][-1].pretty_print()
